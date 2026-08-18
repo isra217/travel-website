@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -27,7 +27,7 @@ interface PackageData {
   slug: string;
 }
 
-export default function BookingPage() {
+function BookingContent() {
   const searchParams = useSearchParams();
 
   const packageSlug = searchParams.get("package");
@@ -234,10 +234,7 @@ export default function BookingPage() {
 
   return (
     <main className="min-h-screen bg-[var(--color-background)]">
-
-      {/* =====================================================
-          HERO / BACKGROUND IMAGE SECTION
-      ===================================================== */}
+      {/* HERO / BACKGROUND IMAGE SECTION */}
 
       <section
         className="relative flex min-h-[430px] items-center justify-center overflow-hidden bg-cover bg-center"
@@ -245,10 +242,8 @@ export default function BookingPage() {
           backgroundImage: `url(${packageData.coverImage})`,
         }}
       >
-        {/* Overlay */}
         <div className="absolute inset-0 bg-slate-950/55" />
 
-        {/* Soft gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/30 via-slate-900/35 to-slate-950/70" />
 
         <div className="section-container relative z-10 px-6 py-24 text-center">
@@ -292,18 +287,12 @@ export default function BookingPage() {
         </div>
       </section>
 
-      {/* =====================================================
-          BOOKING CONTENT
-      ===================================================== */}
+      {/* BOOKING CONTENT */}
 
       <section className="py-16 md:py-20">
         <div className="section-container">
-
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-
-            {/* =================================================
-                SELECTED PACKAGE
-            ================================================= */}
+            {/* SELECTED PACKAGE */}
 
             <motion.div
               initial={{ opacity: 0, x: -25 }}
@@ -312,7 +301,6 @@ export default function BookingPage() {
               transition={{ duration: 0.6 }}
               className="h-fit overflow-hidden rounded-[30px] bg-white shadow-xl"
             >
-
               {/* IMAGE */}
 
               <div className="relative h-64 w-full">
@@ -334,7 +322,6 @@ export default function BookingPage() {
               {/* PACKAGE INFO */}
 
               <div className="p-6 md:p-7">
-
                 <h2 className="text-2xl font-bold text-[var(--color-secondary)]">
                   {packageData.name}
                 </h2>
@@ -347,9 +334,7 @@ export default function BookingPage() {
                 <div className="mt-4 flex items-center gap-2 text-sm text-[var(--color-muted)]">
                   <Clock size={16} className="text-sky-600" />
 
-                  <span>
-                    {packageData.duration?.join(" • ")}
-                  </span>
+                  <span>{packageData.duration?.join(" • ")}</span>
                 </div>
 
                 <div className="my-5 border-t border-[var(--color-border)]" />
@@ -370,13 +355,10 @@ export default function BookingPage() {
                     </span>
                   </p>
                 </div>
-
               </div>
             </motion.div>
 
-            {/* =================================================
-                BOOKING FORM
-            ================================================= */}
+            {/* BOOKING FORM */}
 
             <motion.div
               initial={{ opacity: 0, x: 25 }}
@@ -385,7 +367,6 @@ export default function BookingPage() {
               transition={{ duration: 0.6 }}
               className="rounded-[30px] bg-white p-6 shadow-xl md:p-8"
             >
-
               <h2 className="text-2xl font-bold text-[var(--color-secondary)]">
                 Your Details
               </h2>
@@ -394,9 +375,7 @@ export default function BookingPage() {
                 Tell us a little about yourself and your travel plans.
               </p>
 
-              {/* =================================================
-                  SUCCESS MESSAGE
-              ================================================= */}
+              {/* SUCCESS MESSAGE */}
 
               {success && (
                 <motion.div
@@ -424,9 +403,7 @@ export default function BookingPage() {
                 </motion.div>
               )}
 
-              {/* =================================================
-                  ERROR MESSAGE
-              ================================================= */}
+              {/* ERROR MESSAGE */}
 
               {error && (
                 <motion.div
@@ -439,13 +416,9 @@ export default function BookingPage() {
               )}
 
               <form onSubmit={handleSubmit} className="mt-7 space-y-5">
-
-                {/* =================================================
-                    NAME + EMAIL
-                ================================================= */}
+                {/* NAME + EMAIL */}
 
                 <div className="grid gap-5 md:grid-cols-2">
-
                   {/* NAME */}
 
                   <div>
@@ -495,15 +468,11 @@ export default function BookingPage() {
                       />
                     </div>
                   </div>
-
                 </div>
 
-                {/* =================================================
-                    PHONE + TRAVELERS
-                ================================================= */}
+                {/* PHONE + TRAVELERS */}
 
                 <div className="grid gap-5 md:grid-cols-2">
-
                   {/* PHONE */}
 
                   <div>
@@ -553,15 +522,11 @@ export default function BookingPage() {
                       />
                     </div>
                   </div>
-
                 </div>
 
-                {/* =================================================
-                    DATE + DURATION
-                ================================================= */}
+                {/* DATE + DURATION */}
 
                 <div className="grid gap-5 md:grid-cols-2">
-
                   {/* DATE */}
 
                   <div>
@@ -607,12 +572,9 @@ export default function BookingPage() {
                       ))}
                     </select>
                   </div>
-
                 </div>
 
-                {/* =================================================
-                    MESSAGE
-                ================================================= */}
+                {/* MESSAGE */}
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -636,32 +598,52 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                {/* =================================================
-                    SUBMIT
-                ================================================= */}
+                {/* SUBMIT */}
 
                 <div className="pt-2">
-
                   <button
                     type="submit"
                     disabled={submitting}
                     className="inline-flex items-center justify-center rounded-full bg-sky-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-sky-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {submitting ? "Submitting..." : "Submit Booking Request"}
+                    {submitting
+                      ? "Submitting..."
+                      : "Submit Booking Request"}
                   </button>
 
                   <p className="mt-3 text-xs leading-5 text-slate-400">
                     Submitting this form sends a booking request to our
                     travel team. We will contact you to confirm the details.
                   </p>
-
                 </div>
-
               </form>
             </motion.div>
           </div>
         </div>
       </section>
     </main>
+  );
+}
+
+// ==========================================================
+// PAGE WITH SUSPENSE
+// ==========================================================
+
+export default function BookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[var(--color-background)]">
+          <div className="text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600" />
+            <p className="mt-4 text-sm text-[var(--color-muted)]">
+              Loading your booking page...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <BookingContent />
+    </Suspense>
   );
 }
