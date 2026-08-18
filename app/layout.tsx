@@ -7,9 +7,7 @@ import {
   Satisfy,
 } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/navbar";
-import Footer from "@/components/footer";
-import FloatingButtons from "@/components/floatingbuttons";
+import RootLayoutClient from "./RootLayoutClient";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -44,10 +42,9 @@ export default function RootLayout({
       <body
         className={`${playfair.variable} ${manrope.variable} ${satisfy.variable} antialiased`}
       >
-        <Navbar />
-        {children}
-        <FloatingButtons />
-        <Footer />
+        <RootLayoutClient>
+          {children}
+        </RootLayoutClient>
       </body>
     </html>
   );

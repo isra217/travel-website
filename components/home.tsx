@@ -113,27 +113,63 @@ export default function Hero() {
   const isPrevDisabled = active === 0;
   const isNextDisabled = active === slides.length - 1;
 
-  return (
-    <section className="relative min-h-screen overflow-hidden pb-4">
-      {/* Background Image */}
+ return (
+    <section
+      className="
+        relative
+        w-full
+        overflow-hidden
+        pt-5
+        pb-5
+
+        md:min-h-screen
+        md:pt-8
+        md:pb-6
+        md:w-screen
+        md:max-w-none
+        md:mx-0
+      "
+    >
+      {/* =====================================================
+          BACKGROUND IMAGE
+      ====================================================== */}
+
       <AnimatePresence mode="wait">
         <motion.div
           key={slides[active].id}
-          initial={{ opacity: 0, scale: 1.08 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
-          className="absolute inset-0"
+          initial={{
+            opacity: 0,
+            scale: 1.08,
+          }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+          }}
+          exit={{
+            opacity: 0,
+          }}
+          transition={{
+            duration: 1,
+          }}
+          className="
+            absolute
+            inset-0
+            z-0
+          "
         >
           <Image
             src={slides[active].image}
             alt={slides[active].location}
             fill
             priority
+            sizes="100vw"
             className="object-cover"
           />
         </motion.div>
       </AnimatePresence>
+
+   
+
 
       {/* Left Overlay */}
       <div className="absolute inset-y-0 left-0 w-[55%] bg-gradient-to-r from-[#041C32]/95 via-[#041C32]/70 to-transparent" />
@@ -177,24 +213,19 @@ export default function Hero() {
 
           {/* Buttons */}
           <div className="mt-6 flex flex-wrap gap-3 md:mt-8 md:gap-4">
-            <Link
-              href="/contact"
-              className="rounded-full bg-sky-500 px-5 py-2.5 text-xs font-semibold text-white shadow-md hover:bg-sky-600 md:px-6 md:py-3 md:text-sm"
-            >
-              Book Now
-            </Link>
+
             <Link
               href="/routes"
-              className="rounded-full border border-white/40 bg-white/10 px-5 py-2.5 text-xs font-semibold text-white backdrop-blur-md hover:bg-white hover:text-slate-900 md:px-6 md:py-3 md:text-sm"
+              className="rounded-full bg-sky-500 px-5 py-2.5 text-xs font-semibold text-white shadow-md hover:bg-sky-600 md:px-6 md:py-3 md:text-sm"
             >
               Explore Tours
             </Link>
-            <a
-              href="#about"
+            <Link
+              href="/about"
               className="rounded-full border border-white/40 bg-transparent px-5 py-2.5 text-xs font-semibold text-white backdrop-blur-md hover:bg-white hover:text-slate-900 md:px-6 md:py-3 md:text-sm"
             >
               Learn More
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -207,11 +238,10 @@ export default function Hero() {
               return (
                 <div
                   key={slide.id}
-                  className={`relative flex-shrink-0 w-32 h-24 md:w-44 md:h-36 transition-all duration-500 ${
-                    isActive
+                  className={`relative flex-shrink-0 w-32 h-24 md:w-44 md:h-36 transition-all duration-500 ${isActive
                       ? "border-2 border-sky-400 shadow-lg shadow-sky-400/30 rounded-xl"
                       : "opacity-80"
-                  }`}
+                    }`}
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-xl">
                     <Image
@@ -233,11 +263,10 @@ export default function Hero() {
                     <button
                       onClick={prevCards}
                       disabled={isPrevDisabled}
-                      className={`absolute left-0 top-1/2 z-20 -translate-y-1/2 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-md transition ${
-                        isPrevDisabled
+                      className={`absolute left-0 top-1/2 z-20 -translate-y-1/2 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-md transition ${isPrevDisabled
                           ? "opacity-40 cursor-not-allowed"
                           : "hover:bg-sky-500"
-                      }`}
+                        }`}
                       style={{ transform: "translate(-50%, -50%)" }}
                     >
                       <svg
@@ -262,11 +291,10 @@ export default function Hero() {
                     <button
                       onClick={nextCards}
                       disabled={isNextDisabled}
-                      className={`absolute right-0 top-1/2 z-20 -translate-y-1/2 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-md transition ${
-                        isNextDisabled
+                      className={`absolute right-0 top-1/2 z-20 -translate-y-1/2 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-md transition ${isNextDisabled
                           ? "opacity-40 cursor-not-allowed"
                           : "hover:bg-sky-500"
-                      }`}
+                        }`}
                       style={{ transform: "translate(50%, -50%)" }}
                     >
                       <svg
@@ -297,11 +325,10 @@ export default function Hero() {
             <button
               key={index}
               onClick={() => setActive(index)}
-              className={`transition-all duration-300 ${
-                active === index
+              className={`transition-all duration-300 ${active === index
                   ? "h-2 w-6 rounded-full bg-sky-400"
                   : "h-2 w-2 rounded-full bg-white/60 hover:bg-white"
-              }`}
+                }`}
             />
           ))}
         </div>
@@ -313,11 +340,10 @@ export default function Hero() {
           <button
             key={index}
             onClick={() => setActive(index)}
-            className={`transition-all duration-300 ${
-              active === index
+            className={`transition-all duration-300 ${active === index
                 ? "h-8 w-1.5 md:h-10 md:w-2 rounded-full bg-sky-400"
                 : "h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-white/60 hover:bg-white"
-            }`}
+              }`}
           />
         ))}
       </div>
@@ -327,3 +353,4 @@ export default function Hero() {
     </section>
   );
 }
+

@@ -45,9 +45,8 @@ export default function ContactPage() {
 
   const [formData, setFormData] = useState({
     name: "",
+    phone: "",
     email: "",
-    travelDate: "",
-    destination: "",
     message: "",
   });
 
@@ -60,13 +59,49 @@ export default function ContactPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    console.log("Form submitted:", formData);
+  try {
+    const response = await fetch(
+      "http://localhost:5000/api/packages/contact",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      }
+    );
 
-    alert("Thank you! We'll get back to you soon.");
-  };
+    const data = await response.json();
+
+    console.log("STATUS:", response.status);
+    console.log("BACKEND RESPONSE:", data);
+
+    if (!response.ok) {
+      throw new Error(data.message || "Something went wrong");
+    }
+
+    alert("Thank you! Your message has been sent successfully.");
+
+    setFormData({
+      name: "",
+      phone: "",
+      email: "",
+      message: "",
+    });
+
+  } catch (error) {
+    console.error("CONTACT FORM ERROR:", error);
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Something went wrong. Please try again."
+    );
+  }
+};
 
   return (
     <main className="bg-[var(--color-background)] text-slate-900">
@@ -399,114 +434,78 @@ export default function ContactPage() {
                 >
 
                   {/* Name + Email */}
-                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  {/* Name + Phone */}
+<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 
-                    {/* Name */}
-                    <div>
+  {/* Name */}
+  <div>
+    <label className="mb-2 block text-xs font-medium text-slate-500">
+      Your Name
+    </label>
 
-                      <label className="mb-2 block text-xs font-medium text-slate-500">
-                        Your Name
-                      </label>
+    <input
+      type="text"
+      name="name"
+      value={formData.name}
+      onChange={handleChange}
+      required
+      className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
+      placeholder="John Trangely"
+    />
+  </div>
 
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
-                        placeholder="John Trangely"
-                      />
+  {/* Phone */}
+  <div>
+    <label className="mb-2 block text-xs font-medium text-slate-500">
+      Your Phone
+    </label>
 
-                    </div>
+    <input
+      type="tel"
+      name="phone"
+      value={formData.phone}
+      onChange={handleChange}
+      required
+      className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
+      placeholder="+1 (555) 123-4567"
+    />
+  </div>
 
+</div>
 
-                    {/* Email */}
-                    <div>
+{/* Email */}
+<div className="mt-5">
+  <label className="mb-2 block text-xs font-medium text-slate-500">
+    Your Email
+  </label>
 
-                      <label className="mb-2 block text-xs font-medium text-slate-500">
-                        Your Email
-                      </label>
+  <input
+    type="email"
+    name="email"
+    value={formData.email}
+    onChange={handleChange}
+    required
+    className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
+    placeholder="hello@travel-website.com"
+  />
+</div>
 
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                        className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
-                        placeholder="hello@travel-website.com"
-                      />
+{/* Message */}
+<div className="mt-5">
+  <label className="mb-2 block text-xs font-medium text-slate-500">
+    Message
+  </label>
 
-                    </div>
-
-                  </div>
-
-
-                  {/* Travel Date + Destination */}
-                  <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-
-                    {/* Travel Date */}
-                    <div>
-
-                      <label className="mb-2 block text-xs font-medium text-slate-500">
-                        Travel Date
-                      </label>
-
-                      <input
-                        type="date"
-                        name="travelDate"
-                        value={formData.travelDate}
-                        onChange={handleChange}
-                        required
-                        className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
-                      />
-
-                    </div>
-
-
-                    {/* Destination */}
-                    <div>
-
-                      <label className="mb-2 block text-xs font-medium text-slate-500">
-                        Destination
-                      </label>
-
-                      <input
-                        type="text"
-                        name="destination"
-                        value={formData.destination}
-                        onChange={handleChange}
-                        required
-                        className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
-                        placeholder="e.g. Paris, France"
-                      />
-
-                    </div>
-
-                  </div>
-
-
-                  {/* Message */}
-                  <div className="mt-5">
-
-                    <label className="mb-2 block text-xs font-medium text-slate-500">
-                      Message
-                    </label>
-
-                    <textarea
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      rows={5}
-                      required
-                      className="w-full resize-none border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
-                      placeholder="Tell us about your trip preferences..."
-                    />
-
-                  </div>
-
-
+  <textarea
+    name="message"
+    value={formData.message}
+    onChange={handleChange}
+    rows={5}
+    required
+    className="w-full resize-none border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
+    placeholder="Tell us how we can help you..."
+  />
+</div>
                   {/* Send Button */}
                   <div className="mt-7">
 
@@ -719,7 +718,7 @@ export default function ContactPage() {
 
               {/* Contact Button */}
               <Link
-                href="#form"
+                href="/contact"
                 className="inline-flex min-w-[180px] items-center justify-center rounded-full border border-white/60 bg-white/70 px-6 py-4 text-sm font-semibold text-slate-900 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
               >
                 Contact Us

@@ -21,30 +21,46 @@ export default function ServicesSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchPackages = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/api/packages"
+ useEffect(() => {
+  const fetchPackages = async () => {
+    try {
+      console.log("Fetching packages...");
+
+      const response = await fetch(
+        "http://localhost:5000/api/packages"
+      );
+
+      console.log("Response received:", response.status);
+
+      const data = await response.json();
+
+      console.log("Packages API response:", data);
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch packages"
         );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch packages");
-        }
-
-        const data = await response.json();
-
-        setPackages(data.packages || []);
-      } catch (err) {
-        console.error("Error fetching packages:", err);
-        setError("Unable to load packages.");
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchPackages();
-  }, []);
+      setPackages(data.packages || []);
+
+    } catch (err) {
+      console.error("Error fetching packages:", err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load packages."
+      );
+
+    } finally {
+      console.log("Finished loading packages");
+      setLoading(false);
+    }
+  };
+
+  fetchPackages();
+}, []);
 
   return (
     <section
@@ -221,7 +237,7 @@ export default function ServicesSection() {
 
                     {/* Book Now */}
                     <Link
-                      href={`/booking?package=${encodeURIComponent(pkg.slug)}`}
+                      href={`/booking?package=${pkg.slug}`}
                       className="btn-primary inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold"
                     >
                       Book Now

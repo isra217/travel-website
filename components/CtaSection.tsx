@@ -31,7 +31,7 @@ export default function CtaSection() {
                 WhatsApp
               </a>
               <a
-                href="/contact"
+                href="/routes"
                 className="inline-flex min-w-[180px] items-center justify-center rounded-full bg-sky-600 px-6 py-4 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
               >
                 Book Now

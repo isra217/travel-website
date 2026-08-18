@@ -107,7 +107,7 @@ export default function Navbar() {
 
         <div className="hidden lg:block">
           <Link
-            href="/contact"
+            href="/routes"
             className="rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-sky-700 hover:shadow-lg"
           >
             Book Now

@@ -1,18 +1,22 @@
+
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Calendar,
-  CheckCircle,
-  Mail,
+  Clock,
   MapPin,
-  Phone,
   Users,
+  Mail,
+  Phone,
+  User,
+  MessageSquare,
+  CheckCircle2,
 } from "lucide-react";
 
-interface TravelPackage {
+interface PackageData {
   id: string;
   name: string;
   country: string;
@@ -28,13 +32,8 @@ export default function BookingPage() {
 
   const packageSlug = searchParams.get("package");
 
-  const [selectedPackage, setSelectedPackage] =
-    useState<TravelPackage | null>(null);
-
+  const [packageData, setPackageData] = useState<PackageData | null>(null);
   const [loadingPackage, setLoadingPackage] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -46,28 +45,40 @@ export default function BookingPage() {
     message: "",
   });
 
-  /*
-   * Get selected package from backend
-   */
-  useEffect(() => {
-    const fetchPackage = async () => {
-      if (!packageSlug) {
-        setLoadingPackage(false);
-        return;
-      }
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
 
+  // ==========================================
+  // GET SELECTED PACKAGE
+  // ==========================================
+
+  useEffect(() => {
+    if (!packageSlug) {
+      setLoadingPackage(false);
+      return;
+    }
+
+    const fetchPackage = async () => {
       try {
         const response = await fetch(
           `http://localhost:5000/api/packages/${packageSlug}`
         );
 
-        if (!response.ok) {
-          throw new Error("Package not found");
-        }
-
         const data = await response.json();
 
-        setSelectedPackage(data.package);
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || "Package not found");
+        }
+
+        setPackageData(data.package);
+
+        if (data.package.duration?.length > 0) {
+          setFormData((previous) => ({
+            ...previous,
+            duration: data.package.duration[0],
+          }));
+        }
       } catch (err) {
         console.error("Package error:", err);
         setError("Unable to load the selected package.");
@@ -79,12 +90,13 @@ export default function BookingPage() {
     fetchPackage();
   }, [packageSlug]);
 
-  /*
-   * Handle input changes
-   */
+  // ==========================================
+  // HANDLE INPUT
+  // ==========================================
+
   const handleChange = (
     e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) => {
     const { name, value } = e.target;
@@ -95,48 +107,60 @@ export default function BookingPage() {
     }));
   };
 
-  /*
-   * Submit booking
-   */
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  // ==========================================
+  // SUBMIT BOOKING
+  // ==========================================
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!selectedPackage) {
+    setSubmitting(true);
+    setSuccess("");
+    setError("");
+
+    if (!packageData) {
       setError("Please select a valid package.");
+      setSubmitting(false);
       return;
     }
 
-    setSubmitting(true);
-    setError("");
-    setSuccess(false);
-
     try {
+      const bookingData = {
+        packageId: packageData.id,
+        packageName: packageData.name,
+        packageSlug: packageData.slug,
+        country: packageData.country,
+        price: packageData.price,
+
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        travelers: Number(formData.travelers),
+        travelDate: formData.travelDate,
+        duration: formData.duration,
+        message: formData.message,
+      };
+
       const response = await fetch(
-        "http://localhost:5000/api/bookings",
+        "http://localhost:5000/api/packages/bookings",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            packageId: selectedPackage.id,
-            packageName: selectedPackage.name,
-            packageSlug: selectedPackage.slug,
-            country: selectedPackage.country,
-            ...formData,
-          }),
+          body: JSON.stringify(bookingData),
         }
       );
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to submit booking"
-        );
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Booking failed");
       }
 
-      setSuccess(true);
+      setSuccess(
+        "Your booking request has been submitted successfully! Our travel team will contact you shortly."
+      );
 
       setFormData({
         fullName: "",
@@ -144,7 +168,7 @@ export default function BookingPage() {
         phone: "",
         travelers: "1",
         travelDate: "",
-        duration: "",
+        duration: packageData.duration?.[0] || "",
         message: "",
       });
     } catch (err) {
@@ -160,372 +184,484 @@ export default function BookingPage() {
     }
   };
 
-  /*
-   * No package selected
-   */
-  if (!loadingPackage && !packageSlug) {
-    return (
-      <main className="min-h-screen bg-[var(--color-background)] px-6 py-32">
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-3xl font-bold text-[var(--color-secondary)]">
-            No package selected
-          </h1>
+  // ==========================================
+  // LOADING
+  // ==========================================
 
-          <p className="mt-4 text-[var(--color-muted)]">
-            Please select a travel package before making a booking.
+  if (loadingPackage) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[var(--color-background)]">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600" />
+          <p className="mt-4 text-sm text-[var(--color-muted)]">
+            Loading your selected package...
           </p>
         </div>
       </main>
     );
   }
 
-  /*
-   * Loading
-   */
-  if (loadingPackage) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--color-background)]">
-        <p className="text-[var(--color-muted)]">
-          Loading booking details...
-        </p>
-      </main>
-    );
-  }
+  // ==========================================
+  // NO PACKAGE
+  // ==========================================
 
-  /*
-   * Package not found
-   */
-  if (!selectedPackage) {
+  if (!packageSlug || !packageData) {
     return (
-      <main className="min-h-screen bg-[var(--color-background)] px-6 py-32">
-        <div className="mx-auto max-w-2xl text-center">
+      <main className="flex min-h-screen items-center justify-center bg-[var(--color-background)] px-6">
+        <div className="text-center">
           <h1 className="text-3xl font-bold text-[var(--color-secondary)]">
             Package not found
           </h1>
 
-          <p className="mt-4 text-[var(--color-muted)]">
-            We couldn't find the travel package you selected.
+          <p className="mt-3 text-[var(--color-muted)]">
+            Please return to our packages and select a package to book.
           </p>
+
+          <a
+            href="/routes"
+            className="mt-6 inline-flex rounded-full bg-sky-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-700"
+          >
+            View Packages
+          </a>
         </div>
       </main>
     );
   }
 
+  // ==========================================
+  // BOOKING PAGE
+  // ==========================================
+
   return (
-    <main className="min-h-screen bg-[var(--color-background)] px-6 py-28">
-      <div className="mx-auto max-w-6xl">
+    <main className="min-h-screen bg-[var(--color-background)]">
 
-        {/* Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mx-auto mb-10 max-w-3xl text-center"
-        >
-          <p
-            className="text-2xl text-sky-700 lg:text-3xl"
-            style={{ fontFamily: "var(--font-satisfy)" }}
-          >
-            Plan Your Journey
-          </p>
+      {/* =====================================================
+          HERO / BACKGROUND IMAGE SECTION
+      ===================================================== */}
 
-          <h1 className="mt-2 text-3xl font-bold text-[var(--color-secondary)] md:text-4xl">
-            Book Your{" "}
-            <span className="text-gradient">
-              {selectedPackage.name}
-            </span>
-          </h1>
+      <section
+        className="relative flex min-h-[430px] items-center justify-center overflow-hidden bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${packageData.coverImage})`,
+        }}
+      >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-slate-950/55" />
 
-          <p className="mt-4 text-sm leading-7 text-[var(--color-muted)] md:text-base">
-            Tell us a little about your trip and our team will
-            get back to you with the next steps.
-          </p>
-        </motion.div>
+        {/* Soft gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/30 via-slate-900/35 to-slate-950/70" />
 
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
-
-          {/* Selected Package */}
+        <div className="section-container relative z-10 px-6 py-24 text-center">
           <motion.div
-            initial={{ opacity: 0, x: -25 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="overflow-hidden rounded-[28px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.06)]"
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="mx-auto max-w-3xl"
           >
-            {/* Package Image */}
-            <div className="relative h-64 overflow-hidden">
-              <img
-                src={selectedPackage.coverImage}
-                alt={selectedPackage.name}
-                className="h-full w-full object-cover"
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-
-              <div className="absolute bottom-5 left-5">
-                <h2 className="text-2xl font-bold text-white">
-                  {selectedPackage.name}
-                </h2>
-
-                <div className="mt-1 flex items-center gap-1.5 text-sm text-white/90">
-                  <MapPin size={15} />
-                  {selectedPackage.country}
-                </div>
-              </div>
-            </div>
-
-            {/* Package Info */}
-            <div className="p-6">
-
-              <p className="text-sm leading-7 text-[var(--color-muted)]">
-                {selectedPackage.description}
-              </p>
-
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-
-                <div className="rounded-xl bg-sky-50 p-4">
-                  <p className="text-xs text-[var(--color-muted)]">
-                    Starting Price
-                  </p>
-
-                  <p className="mt-1 text-xl font-bold text-sky-700">
-                    ${selectedPackage.price}
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-sky-50 p-4">
-                  <p className="text-xs text-[var(--color-muted)]">
-                    Available Durations
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-[var(--color-secondary)]">
-                    {selectedPackage.duration?.join(", ")}
-                  </p>
-                </div>
-
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Booking Form */}
-          <motion.div
-            initial={{ opacity: 0, x: 25 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="rounded-[28px] bg-white p-6 shadow-[0_10px_40px_rgba(0,0,0,0.06)] md:p-8"
-          >
-            <h2 className="text-2xl font-bold text-[var(--color-secondary)]">
-              Booking Information
-            </h2>
-
-            <p className="mt-2 text-sm text-[var(--color-muted)]">
-              Fill in your details and we'll contact you to
-              confirm your trip.
+            <p
+              className="text-2xl text-sky-300 md:text-3xl"
+              style={{ fontFamily: "var(--font-satisfy)" }}
+            >
+              Book Your Journey
             </p>
 
-            {/* Success */}
-            {success && (
-              <div className="mt-6 flex items-start gap-3 rounded-xl bg-green-50 p-4 text-green-700">
-                <CheckCircle className="mt-0.5 shrink-0" size={20} />
+            <h1 className="mt-3 text-4xl font-bold text-white md:text-5xl lg:text-6xl">
+              Let&apos;s plan your trip
+            </h1>
 
-                <div>
-                  <p className="font-semibold">
-                    Booking request submitted!
-                  </p>
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/85 md:text-base">
+              Your next adventure starts here. Tell us about your travel
+              plans and our team will help you create a journey worth
+              remembering.
+            </p>
 
-                  <p className="mt-1 text-sm">
-                    Thank you. Our team will contact you soon.
-                  </p>
-                </div>
-              </div>
-            )}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm text-white/90">
+              <span className="rounded-full bg-white/15 px-4 py-2 backdrop-blur-md">
+                {packageData.name}
+              </span>
 
-            {/* Error */}
-            {error && (
-              <div className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-600">
-                {error}
-              </div>
-            )}
+              <span className="rounded-full bg-white/15 px-4 py-2 backdrop-blur-md">
+                {packageData.country}
+              </span>
 
-            <form
-              onSubmit={handleSubmit}
-              className="mt-6 space-y-5"
+              <span className="rounded-full bg-white/15 px-4 py-2 backdrop-blur-md">
+                From ${packageData.price} / person
+              </span>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          BOOKING CONTENT
+      ===================================================== */}
+
+      <section className="py-16 md:py-20">
+        <div className="section-container">
+
+          <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+
+            {/* =================================================
+                SELECTED PACKAGE
+            ================================================= */}
+
+            <motion.div
+              initial={{ opacity: 0, x: -25 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="h-fit overflow-hidden rounded-[30px] bg-white shadow-xl"
             >
 
-              {/* Full Name */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--color-secondary)]">
-                  Full Name
-                </label>
+              {/* IMAGE */}
 
-                <div className="relative">
-                  <Users
-                    size={17}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
+              <div className="relative h-64 w-full">
+                <img
+                  src={packageData.coverImage}
+                  alt={packageData.name}
+                  className="h-full w-full object-cover"
+                />
 
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="Enter your full name"
-                    required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
-                  />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+
+                <div className="absolute bottom-5 left-5">
+                  <span className="rounded-full bg-sky-500/90 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
+                    ${packageData.price} / person
+                  </span>
                 </div>
               </div>
 
-              {/* Email */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--color-secondary)]">
-                  Email Address
-                </label>
+              {/* PACKAGE INFO */}
 
-                <div className="relative">
-                  <Mail
-                    size={17}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
+              <div className="p-6 md:p-7">
 
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="you@example.com"
-                    required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
-                  />
+                <h2 className="text-2xl font-bold text-[var(--color-secondary)]">
+                  {packageData.name}
+                </h2>
+
+                <div className="mt-3 flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                  <MapPin size={16} className="text-sky-600" />
+                  {packageData.country}
                 </div>
-              </div>
 
-              {/* Phone */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--color-secondary)]">
-                  Phone Number
-                </label>
+                <div className="mt-4 flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                  <Clock size={16} className="text-sky-600" />
 
-                <div className="relative">
-                  <Phone
-                    size={17}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="+92 300 1234567"
-                    required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
-                  />
+                  <span>
+                    {packageData.duration?.join(" • ")}
+                  </span>
                 </div>
-              </div>
 
-              {/* Travelers + Date */}
-              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="my-5 border-t border-[var(--color-border)]" />
+
+                <p className="text-sm leading-7 text-[var(--color-muted)]">
+                  {packageData.description}
+                </p>
+
+                <div className="mt-6 rounded-2xl bg-sky-50 p-4">
+                  <p className="text-xs text-[var(--color-muted)]">
+                    Starting from
+                  </p>
+
+                  <p className="mt-1 text-2xl font-bold text-sky-700">
+                    ${packageData.price}
+                    <span className="ml-1 text-sm font-normal">
+                      / person
+                    </span>
+                  </p>
+                </div>
+
+              </div>
+            </motion.div>
+
+            {/* =================================================
+                BOOKING FORM
+            ================================================= */}
+
+            <motion.div
+              initial={{ opacity: 0, x: 25 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="rounded-[30px] bg-white p-6 shadow-xl md:p-8"
+            >
+
+              <h2 className="text-2xl font-bold text-[var(--color-secondary)]">
+                Your Details
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                Tell us a little about yourself and your travel plans.
+              </p>
+
+              {/* =================================================
+                  SUCCESS MESSAGE
+              ================================================= */}
+
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-4 text-sm text-green-700"
+                >
+                  <CheckCircle2
+                    size={20}
+                    className="mt-0.5 shrink-0 text-green-600"
+                  />
+
+                  <div>
+                    <p className="font-semibold">
+                      Booking request submitted!
+                    </p>
+
+                    <p className="mt-1 leading-6 text-green-700/90">
+                      {success.replace(
+                        "Your booking request has been submitted successfully! ",
+                        ""
+                      )}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* =================================================
+                  ERROR MESSAGE
+              ================================================= */}
+
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600"
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              <form onSubmit={handleSubmit} className="mt-7 space-y-5">
+
+                {/* =================================================
+                    NAME + EMAIL
+                ================================================= */}
+
+                <div className="grid gap-5 md:grid-cols-2">
+
+                  {/* NAME */}
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Full Name
+                    </label>
+
+                    <div className="relative">
+                      <User
+                        size={17}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="text"
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleChange}
+                        required
+                        placeholder="Enter your full name"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
+                      />
+                    </div>
+                  </div>
+
+                  {/* EMAIL */}
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Email
+                    </label>
+
+                    <div className="relative">
+                      <Mail
+                        size={17}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        placeholder="you@example.com"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
+                      />
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* =================================================
+                    PHONE + TRAVELERS
+                ================================================= */}
+
+                <div className="grid gap-5 md:grid-cols-2">
+
+                  {/* PHONE */}
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Phone
+                    </label>
+
+                    <div className="relative">
+                      <Phone
+                        size={17}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        required
+                        placeholder="+92 300 1234567"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
+                      />
+                    </div>
+                  </div>
+
+                  {/* TRAVELERS */}
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Number of Travelers
+                    </label>
+
+                    <div className="relative">
+                      <Users
+                        size={17}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="number"
+                        name="travelers"
+                        value={formData.travelers}
+                        onChange={handleChange}
+                        min="1"
+                        required
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
+                      />
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* =================================================
+                    DATE + DURATION
+                ================================================= */}
+
+                <div className="grid gap-5 md:grid-cols-2">
+
+                  {/* DATE */}
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Preferred Travel Date
+                    </label>
+
+                    <div className="relative">
+                      <Calendar
+                        size={17}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="date"
+                        name="travelDate"
+                        value={formData.travelDate}
+                        onChange={handleChange}
+                        required
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
+                      />
+                    </div>
+                  </div>
+
+                  {/* DURATION */}
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Preferred Duration
+                    </label>
+
+                    <select
+                      name="duration"
+                      value={formData.duration}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
+                    >
+                      {packageData.duration?.map((duration) => (
+                        <option key={duration} value={duration}>
+                          {duration}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                </div>
+
+                {/* =================================================
+                    MESSAGE
+                ================================================= */}
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[var(--color-secondary)]">
-                    Number of Travelers
-                  </label>
-
-                  <input
-                    type="number"
-                    name="travelers"
-                    min="1"
-                    value={formData.travelers}
-                    onChange={handleChange}
-                    required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[var(--color-secondary)]">
-                    Preferred Travel Date
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Special Requests
                   </label>
 
                   <div className="relative">
-                    <Calendar
+                    <MessageSquare
                       size={17}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-4 top-4 text-slate-400"
                     />
 
-                    <input
-                      type="date"
-                      name="travelDate"
-                      value={formData.travelDate}
+                    <textarea
+                      name="message"
+                      value={formData.message}
                       onChange={handleChange}
-                      required
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
+                      rows={4}
+                      placeholder="Tell us about any preferences or special requests..."
+                      className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
                     />
                   </div>
                 </div>
 
-              </div>
+                {/* =================================================
+                    SUBMIT
+                ================================================= */}
 
-              {/* Duration */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--color-secondary)]">
-                  Preferred Duration
-                </label>
+                <div className="pt-2">
 
-                <select
-                  name="duration"
-                  value={formData.duration}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
-                >
-                  <option value="">
-                    Select duration
-                  </option>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex items-center justify-center rounded-full bg-sky-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-sky-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {submitting ? "Submitting..." : "Submit Booking Request"}
+                  </button>
 
-                  {selectedPackage.duration?.map((duration) => (
-                    <option
-                      key={duration}
-                      value={duration}
-                    >
-                      {duration}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <p className="mt-3 text-xs leading-5 text-slate-400">
+                    Submitting this form sends a booking request to our
+                    travel team. We will contact you to confirm the details.
+                  </p>
 
-              {/* Message */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--color-secondary)]">
-                  Special Requests
-                </label>
+                </div>
 
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  rows={4}
-                  placeholder="Tell us anything you'd like us to know..."
-                  className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
-                />
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={submitting}
-                className="btn-primary w-full rounded-full px-6 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {submitting
-                  ? "Submitting..."
-                  : "Submit Booking Request"}
-              </button>
-
-            </form>
-          </motion.div>
-
+              </form>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }
