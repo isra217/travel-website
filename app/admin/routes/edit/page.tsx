@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -21,7 +21,7 @@ interface TravelPackage {
   slug: string;
 }
 
-export default function EditRoutePage() {
+function EditRouteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -92,7 +92,6 @@ export default function EditRoutePage() {
           coverImage: pkg.coverImage || "",
           slug: pkg.slug || "",
         });
-
       } catch (error) {
         console.error("Fetch route error:", error);
 
@@ -182,12 +181,10 @@ export default function EditRoutePage() {
 
       setSuccess("Route updated successfully!");
 
-      // Go back to routes list after successful update
       setTimeout(() => {
         router.push("/admin/routes");
         router.refresh();
       }, 1000);
-
     } catch (error) {
       console.error("Update route error:", error);
 
@@ -209,7 +206,6 @@ export default function EditRoutePage() {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-
           <Loader2
             size={32}
             className="animate-spin text-sky-600"
@@ -218,7 +214,6 @@ export default function EditRoutePage() {
           <p className="text-sm text-slate-500">
             Loading route...
           </p>
-
         </div>
       </div>
     );
@@ -231,7 +226,6 @@ export default function EditRoutePage() {
   if (!id) {
     return (
       <main>
-
         <Link
           href="/admin/routes"
           className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-sky-600"
@@ -250,7 +244,6 @@ export default function EditRoutePage() {
             to edit.
           </p>
         </div>
-
       </main>
     );
   }
@@ -261,13 +254,9 @@ export default function EditRoutePage() {
 
   return (
     <main>
-
-      {/* ==================================================
-          HEADER
-      ================================================== */}
+      {/* HEADER */}
 
       <div className="mb-8">
-
         <Link
           href="/admin/routes"
           className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-sky-600"
@@ -292,13 +281,9 @@ export default function EditRoutePage() {
         <p className="mt-2 text-sm text-slate-500">
           Update the details of your travel package.
         </p>
-
       </div>
 
-
-      {/* ==================================================
-          ERROR
-      ================================================== */}
+      {/* ERROR */}
 
       {error && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
@@ -306,10 +291,7 @@ export default function EditRoutePage() {
         </div>
       )}
 
-
-      {/* ==================================================
-          SUCCESS
-      ================================================== */}
+      {/* SUCCESS */}
 
       {success && (
         <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm text-green-700">
@@ -317,21 +299,14 @@ export default function EditRoutePage() {
         </div>
       )}
 
-
-      {/* ==================================================
-          FORM
-      ================================================== */}
+      {/* FORM */}
 
       <form
         onSubmit={handleSubmit}
         className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8"
       >
-
         <div className="grid gap-6 md:grid-cols-2">
-
-          {/* ==================================================
-              NAME
-          ================================================== */}
+          {/* NAME */}
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -349,10 +324,7 @@ export default function EditRoutePage() {
             />
           </div>
 
-
-          {/* ==================================================
-              COUNTRY
-          ================================================== */}
+          {/* COUNTRY */}
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -370,10 +342,7 @@ export default function EditRoutePage() {
             />
           </div>
 
-
-          {/* ==================================================
-              PRICE
-          ================================================== */}
+          {/* PRICE */}
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -392,10 +361,7 @@ export default function EditRoutePage() {
             />
           </div>
 
-
-          {/* ==================================================
-              DURATION
-          ================================================== */}
+          {/* DURATION */}
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -413,17 +379,14 @@ export default function EditRoutePage() {
             />
 
             <p className="mt-1 text-xs text-slate-400">
-              If you have multiple durations, separate them with commas.
+              If you have multiple durations, separate them
+              with commas.
             </p>
           </div>
 
-
-          {/* ==================================================
-              SLUG
-          ================================================== */}
+          {/* SLUG */}
 
           <div className="md:col-span-2">
-
             <label className="mb-2 block text-sm font-semibold text-slate-700">
               Slug
             </label>
@@ -441,16 +404,11 @@ export default function EditRoutePage() {
             <p className="mt-1 text-xs text-slate-400">
               This is used in the package URL.
             </p>
-
           </div>
 
-
-          {/* ==================================================
-              COVER IMAGE
-          ================================================== */}
+          {/* COVER IMAGE */}
 
           <div className="md:col-span-2">
-
             <label className="mb-2 block text-sm font-semibold text-slate-700">
               Cover Image URL
             </label>
@@ -463,18 +421,12 @@ export default function EditRoutePage() {
               placeholder="/images/switzerland.jpg"
               className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             />
-
           </div>
 
-
-          {/* ==================================================
-              IMAGE PREVIEW
-          ================================================== */}
+          {/* IMAGE PREVIEW */}
 
           <div className="md:col-span-2">
-
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-
               {formData.coverImage ? (
                 <img
                   src={formData.coverImage}
@@ -483,7 +435,6 @@ export default function EditRoutePage() {
                 />
               ) : (
                 <div className="flex h-64 flex-col items-center justify-center">
-
                   <ImageIcon
                     size={35}
                     className="text-slate-300"
@@ -492,21 +443,14 @@ export default function EditRoutePage() {
                   <p className="mt-2 text-sm text-slate-400">
                     No image available
                   </p>
-
                 </div>
               )}
-
             </div>
-
           </div>
 
-
-          {/* ==================================================
-              DESCRIPTION
-          ================================================== */}
+          {/* DESCRIPTION */}
 
           <div className="md:col-span-2">
-
             <label className="mb-2 block text-sm font-semibold text-slate-700">
               Description
             </label>
@@ -520,18 +464,12 @@ export default function EditRoutePage() {
               placeholder="Describe this travel package..."
               className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             />
-
           </div>
-
         </div>
 
-
-        {/* ==================================================
-            BUTTONS
-        ================================================== */}
+        {/* BUTTONS */}
 
         <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
-
           <Link
             href="/admin/routes"
             className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
@@ -544,7 +482,6 @@ export default function EditRoutePage() {
             disabled={saving}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-
             {saving ? (
               <>
                 <Loader2
@@ -559,13 +496,36 @@ export default function EditRoutePage() {
                 Save Changes
               </>
             )}
-
           </button>
-
         </div>
-
       </form>
-
     </main>
+  );
+}
+
+// ======================================================
+// PAGE
+// ======================================================
+
+export default function EditRoutePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2
+              size={32}
+              className="animate-spin text-sky-600"
+            />
+
+            <p className="text-sm text-slate-500">
+              Loading route...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <EditRouteContent />
+    </Suspense>
   );
 }
