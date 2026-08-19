@@ -1,14 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 
-const packageRoutes = require("../routes");
-const contactRoutes = require("../contactRoutes");
+const packageRoutes = require("../backend/routes");
+const contactRoutes = require("../backend/contactRoutes");
 
 const app = express();
-
-// ==========================================
-// MIDDLEWARE
-// ==========================================
 
 app.use(
   cors({
@@ -19,10 +15,6 @@ app.use(
 );
 
 app.use(express.json());
-
-// ==========================================
-// TEST ROUTE
-// ==========================================
 
 app.get("/", (req, res) => {
   res.json({
@@ -38,16 +30,7 @@ app.get("/api", (req, res) => {
   });
 });
 
-// ==========================================
-// API ROUTES
-// ==========================================
-
 app.use("/api/packages", packageRoutes);
-
 app.use("/api/contact", contactRoutes);
-
-// ==========================================
-// EXPORT FOR VERCEL
-// ==========================================
 
 module.exports = app;
