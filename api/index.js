@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
 
+const db = require("../backend/firebase");
 const packageRoutes = require("../backend/routes");
 const contactRoutes = require("../backend/contactRoutes");
 
@@ -16,6 +18,10 @@ app.use(
 
 app.use(express.json());
 
+// ================================
+// TEST
+// ================================
+
 app.get("/", (req, res) => {
   res.json({
     success: true,
@@ -23,12 +29,9 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/api", (req, res) => {
-  res.json({
-    success: true,
-    message: "Travelia Backend API is working on Vercel!",
-  });
-});
+// ================================
+// API ROUTES
+// ================================
 
 app.use("/api/packages", packageRoutes);
 app.use("/api/contact", contactRoutes);
