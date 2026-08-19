@@ -64,17 +64,17 @@ export default function AdminDashboardPage() {
 
         const [bookingsResponse, contactsResponse, packagesResponse] =
           await Promise.all([
-            fetch("http://localhost:5000/api/packages/bookings", {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packages/bookings`, {
               method: "GET",
               cache: "no-store",
             }),
 
-            fetch("http://localhost:5000/api/packages/contact", {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packages/contact`, {
               method: "GET",
               cache: "no-store",
             }),
 
-            fetch("http://localhost:5000/api/packages", {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packages`, {
               method: "GET",
               cache: "no-store",
             }),

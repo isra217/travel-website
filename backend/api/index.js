@@ -1,11 +1,81 @@
-const express = require('express');
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+
+const db = require("../firebase");
+const packageRoutes = require("../route");
+const contactRoutes = require("../contactRoutes");
+
 const app = express();
 
-// Your middleware and Firebase logic here...
+// ==========================================
+// MIDDLEWARE
+// ==========================================
 
-app.get('/api/test', (req, res) => {
-  res.json({ message: "Backend is working perfectly on Vercel!" });
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+
+app.use(express.json());
+
+// ==========================================
+// TEST ROUTE
+// ==========================================
+
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Travelia Express Backend is working!",
+  });
 });
 
-// IMPORTANT: Do not use app.listen(). Export the app.
+app.get("/api", (req, res) => {
+  res.json({
+    success: true,
+    message: "Travelia Backend API is working on Vercel!",
+  });
+});
+
+// ==========================================
+// FIREBASE TEST
+// ==========================================
+
+app.get("/test-firebase", async (req, res) => {
+  try {
+    await db.collection("test").doc("connection").set({
+      message: "Firebase connection is working",
+      createdAt: new Date(),
+    });
+
+    res.json({
+      success: true,
+      message: "Firebase connected successfully!",
+    });
+  } catch (error) {
+    console.error("Firebase error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Firebase connection failed",
+      error: error.message,
+    });
+  }
+});
+
+// ==========================================
+// API ROUTES
+// ==========================================
+
+app.use("/api/packages", packageRoutes);
+
+app.use("/api/contact", contactRoutes);
+
+// ==========================================
+// EXPORT FOR VERCEL
+// ==========================================
+
 module.exports = app;

@@ -50,7 +50,7 @@ export default function AdminBookingsPage() {
         const token = localStorage.getItem("adminToken");
 
         const response = await fetch(
-          "http://localhost:5000/api/packages/bookings",
+          `${process.env.NEXT_PUBLIC_API_URL}/api/packages/bookings`,
           {
             method: "GET",
             headers: {

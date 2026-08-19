@@ -39,7 +39,7 @@ export default function AdminRoutesPage() {
       setError("");
 
       const response = await fetch(
-        "http://localhost:5000/api/packages",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/packages`,
         {
           method: "GET",
           cache: "no-store",
@@ -95,7 +95,7 @@ export default function AdminRoutesPage() {
       const token = localStorage.getItem("adminToken");
 
       const response = await fetch(
-        `http://localhost:5000/api/packages/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/packages/${id}`,
         {
           method: "DELETE",
           headers: {

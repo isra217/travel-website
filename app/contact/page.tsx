@@ -64,7 +64,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   try {
     const response = await fetch(
-      "http://localhost:5000/api/packages/contact",
+      `${process.env.NEXT_PUBLIC_API_URL}/api/packages/contact`,
       {
         method: "POST",
         headers: {

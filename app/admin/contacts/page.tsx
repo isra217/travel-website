@@ -37,7 +37,7 @@ export default function AdminContactsPage() {
         setError("");
 
         const response = await fetch(
-          "http://localhost:5000/api/packages/contact"
+          `${process.env.NEXT_PUBLIC_API_URL}/api/packages/contact`
         );
 
         const data = await response.json();

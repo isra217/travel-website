@@ -60,7 +60,7 @@ function EditRouteContent() {
         setError("");
 
         const response = await fetch(
-          `http://localhost:5000/api/packages/id/${id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/packages/id/${id}`,
           {
             method: "GET",
             cache: "no-store",
@@ -153,7 +153,7 @@ function EditRouteContent() {
         .filter(Boolean);
 
       const response = await fetch(
-        `http://localhost:5000/api/packages/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/packages/${id}`,
         {
           method: "PUT",
           headers: {

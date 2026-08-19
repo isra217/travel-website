@@ -27,7 +27,7 @@ export default function ServicesSection() {
       console.log("Fetching packages...");
 
       const response = await fetch(
-        "http://localhost:5000/api/packages"
+        `${process.env.NEXT_PUBLIC_API_URL}/api/packages`
       );
 
       console.log("Response received:", response.status);
