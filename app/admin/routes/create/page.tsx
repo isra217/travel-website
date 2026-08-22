@@ -95,7 +95,7 @@ export default function CreateRoutePage() {
       // ----------------------------------------
 
       const response = await fetch(
-        "http://localhost:5000/api/packages",
+         `${process.env.NEXT_PUBLIC_API_URL}/api/packages`,
         {
           method: "POST",
 
