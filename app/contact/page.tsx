@@ -43,12 +43,24 @@ const faqs = [
 export default function ContactPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  // Form data
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     email: "",
     message: "",
   });
+
+  // Success / error messages
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // Loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ==========================================
+  // HANDLE INPUT CHANGE
+  // ==========================================
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -57,51 +69,92 @@ export default function ContactPage() {
       ...formData,
       [e.target.name]: e.target.value,
     });
-  };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/packages/contact`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      }
-    );
-
-    const data = await response.json();
-
-    console.log("STATUS:", response.status);
-    console.log("BACKEND RESPONSE:", data);
-
-    if (!response.ok) {
-      throw new Error(data.message || "Something went wrong");
+    // Remove messages when user starts typing again
+    if (successMessage) {
+      setSuccessMessage("");
     }
 
-    alert("Thank you! Your message has been sent successfully.");
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  };
 
-    setFormData({
-      name: "",
-      phone: "",
-      email: "",
-      message: "",
-    });
+  // ==========================================
+  // SUBMIT CONTACT FORM
+  // ==========================================
 
-  } catch (error) {
-    console.error("CONTACT FORM ERROR:", error);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    alert(
-      error instanceof Error
-        ? error.message
-        : "Something went wrong. Please try again."
-    );
-  }
-};
+    // Clear previous messages
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    // Start loading
+    setIsSubmitting(true);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+      // Make sure environment variable exists
+      if (!apiUrl) {
+        throw new Error(
+          "API URL is not configured. Please check NEXT_PUBLIC_API_URL."
+        );
+      }
+
+      const response = await fetch(
+        `${apiUrl}/api/packages/contact`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      // Read response
+      const data = await response.json();
+
+      console.log("STATUS:", response.status);
+      console.log("BACKEND RESPONSE:", data);
+
+      // Backend returned an error
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to submit your message."
+        );
+      }
+
+      // ==========================================
+      // SUCCESS
+      // ==========================================
+
+      setSuccessMessage(
+        "Your message has been submitted successfully! We'll get back to you within 24 hours."
+      );
+
+      // Clear form
+      setFormData({
+        name: "",
+        phone: "",
+        email: "",
+        message: "",
+      });
+    } catch (error) {
+      console.error("CONTACT FORM ERROR:", error);
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <main className="bg-[var(--color-background)] text-slate-900">
@@ -141,16 +194,16 @@ const handleSubmit = async (e: React.FormEvent) => {
             className="mx-auto max-w-3xl text-center text-white"
           >
 
-            
             {/* Main Heading */}
             <h1 className="mt-2 text-3xl font-bold leading-tight text-white drop-shadow-md md:text-4xl lg:text-4xl">
-             Let’s Design Your 
+              Let’s Design Your
               <span className="text-gradient"> Next Chapter</span>
             </h1>
 
             {/* Description */}
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/95 md:text-base">
-              Get in touch with our dedicated travel curators today, and let us bring your ideal travel vision to life.
+              Get in touch with our dedicated travel curators today, and let
+              us bring your ideal travel vision to life.
             </p>
 
           </motion.div>
@@ -158,7 +211,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
 
       </section>
-
 
       {/* =========================================================
           2. GET IN TOUCH SECTION
@@ -169,6 +221,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         <div className="section-container">
 
           {/* Section Heading */}
+
           <motion.div
             initial={{
               opacity: 0,
@@ -188,6 +241,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           >
 
             {/* Satisfy Heading */}
+
             <p
               className="text-2xl text-sky-700 lg:text-3xl"
               style={{
@@ -198,11 +252,13 @@ const handleSubmit = async (e: React.FormEvent) => {
             </p>
 
             {/* Main Heading */}
+
             <h2 className="mt-2 text-3xl font-bold text-[var(--color-secondary)] md:text-4xl">
               Get In Touch
             </h2>
 
             {/* Description */}
+
             <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-600 md:text-base">
               Have a destination in mind or need help planning your next
               adventure? Tell us what you&apos;re looking for and let&apos;s
@@ -210,7 +266,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             </p>
 
           </motion.div>
-
 
           {/* =====================================================
               CONTACT CARD
@@ -237,45 +292,48 @@ const handleSubmit = async (e: React.FormEvent) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2">
 
-
               {/* =================================================
-                  LEFT — COLORED GLASS CONTACT PANEL
+                  LEFT — CONTACT INFORMATION
               ================================================= */}
 
               <div className="relative overflow-hidden border-b border-white/30 bg-gradient-to-br from-[var(--color-secondary)]/85 via-sky-700/75 to-sky-500/70 p-8 text-white backdrop-blur-xl md:border-b-0 md:border-r md:p-12">
 
                 {/* Glass Highlight */}
+
                 <div className="pointer-events-none absolute inset-0 bg-white/5 backdrop-blur-[2px]" />
 
                 {/* Decorative Circle */}
+
                 <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full border border-white/20 bg-white/10 backdrop-blur-md" />
 
                 <div className="pointer-events-none absolute -left-20 -top-20 h-48 w-48 rounded-full border border-white/10 bg-sky-300/10 blur-sm" />
 
-
                 {/* Content */}
+
                 <div className="relative z-10 flex h-full flex-col justify-between">
 
                   <div>
 
                     {/* Heading */}
+
                     <h3 className="text-2xl font-bold text-white md:text-3xl">
                       Contact Information
                     </h3>
 
                     {/* Description */}
+
                     <p className="mt-3 max-w-sm text-sm leading-6 text-white/85">
                       We&apos;re here to help you plan your next adventure.
                       Whether you have a destination in mind or need some
                       inspiration, we&apos;d love to hear from you.
                     </p>
 
-
                     {/* Contact Details */}
+
                     <div className="mt-8 space-y-6">
 
-
                       {/* Phone */}
+
                       <div className="flex items-start gap-4">
 
                         <div className="rounded-full border border-white/30 bg-white/10 p-3 shadow-sm backdrop-blur-md">
@@ -297,8 +355,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                       </div>
 
-
                       {/* Email */}
+
                       <div className="flex items-start gap-4">
 
                         <div className="rounded-full border border-white/30 bg-white/10 p-3 shadow-sm backdrop-blur-md">
@@ -320,8 +378,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                       </div>
 
-
                       {/* Location */}
+
                       <div className="flex items-start gap-4">
 
                         <div className="rounded-full border border-white/30 bg-white/10 p-3 shadow-sm backdrop-blur-md">
@@ -347,7 +405,6 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                   </div>
 
-
                   {/* =================================================
                       SOCIAL ICONS
                   ================================================= */}
@@ -361,6 +418,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <div className="flex gap-3">
 
                       {/* Facebook */}
+
                       <a
                         href="#"
                         aria-label="Facebook"
@@ -369,8 +427,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                         <FaFacebook size={15} />
                       </a>
 
-
                       {/* Twitter */}
+
                       <a
                         href="#"
                         aria-label="Twitter"
@@ -379,8 +437,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                         <FaTwitter size={15} />
                       </a>
 
-
                       {/* Instagram */}
+
                       <a
                         href="#"
                         aria-label="Instagram"
@@ -389,8 +447,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                         <FaInstagram size={15} />
                       </a>
 
-
                       {/* YouTube */}
+
                       <a
                         href="#"
                         aria-label="YouTube"
@@ -407,7 +465,6 @@ const handleSubmit = async (e: React.FormEvent) => {
 
               </div>
 
-
               {/* =================================================
                   RIGHT — FORM
               ================================================= */}
@@ -415,107 +472,173 @@ const handleSubmit = async (e: React.FormEvent) => {
               <div className="bg-white/75 p-8 backdrop-blur-xl md:p-12">
 
                 {/* Form Heading */}
+
                 <h3 className="text-2xl font-bold text-[var(--color-secondary)] md:text-3xl">
                   Send a Message
                 </h3>
 
                 {/* Form Description */}
+
                 <p className="mt-2 text-sm leading-6 text-slate-500">
                   Share a few details about your trip and we&apos;ll help you
                   plan the perfect experience.
                 </p>
 
-
                 {/* Form */}
+
                 <form
                   id="form"
                   onSubmit={handleSubmit}
                   className="mt-7"
                 >
 
-                  {/* Name + Email */}
-                  {/* Name + Phone */}
-<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  {/* ==========================================
+                      SUCCESS MESSAGE
+                  ========================================== */}
 
-  {/* Name */}
-  <div>
-    <label className="mb-2 block text-xs font-medium text-slate-500">
-      Your Name
-    </label>
+                  {successMessage && (
+                    <div
+                      className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700"
+                      role="status"
+                    >
+                      {successMessage}
+                    </div>
+                  )}
 
-    <input
-      type="text"
-      name="name"
-      value={formData.name}
-      onChange={handleChange}
-      required
-      className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
-      placeholder="John Trangely"
-    />
-  </div>
+                  {/* ==========================================
+                      ERROR MESSAGE
+                  ========================================== */}
 
-  {/* Phone */}
-  <div>
-    <label className="mb-2 block text-xs font-medium text-slate-500">
-      Your Phone
-    </label>
+                  {errorMessage && (
+                    <div
+                      className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600"
+                      role="alert"
+                    >
+                      {errorMessage}
+                    </div>
+                  )}
 
-    <input
-      type="tel"
-      name="phone"
-      value={formData.phone}
-      onChange={handleChange}
-      required
-      className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
-      placeholder="+1 (555) 123-4567"
-    />
-  </div>
+                  {/* ==========================================
+                      NAME + PHONE
+                  ========================================== */}
 
-</div>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 
-{/* Email */}
-<div className="mt-5">
-  <label className="mb-2 block text-xs font-medium text-slate-500">
-    Your Email
-  </label>
+                    {/* Name */}
 
-  <input
-    type="email"
-    name="email"
-    value={formData.email}
-    onChange={handleChange}
-    required
-    className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
-    placeholder="hello@travel-website.com"
-  />
-</div>
+                    <div>
 
-{/* Message */}
-<div className="mt-5">
-  <label className="mb-2 block text-xs font-medium text-slate-500">
-    Message
-  </label>
+                      <label className="mb-2 block text-xs font-medium text-slate-500">
+                        Your Name
+                      </label>
 
-  <textarea
-    name="message"
-    value={formData.message}
-    onChange={handleChange}
-    rows={5}
-    required
-    className="w-full resize-none border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)]"
-    placeholder="Tell us how we can help you..."
-  />
-</div>
-                  {/* Send Button */}
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        disabled={isSubmitting}
+                        className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                        placeholder="John Trangely"
+                      />
+
+                    </div>
+
+                    {/* Phone */}
+
+                    <div>
+
+                      <label className="mb-2 block text-xs font-medium text-slate-500">
+                        Your Phone
+                      </label>
+
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        required
+                        disabled={isSubmitting}
+                        className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                        placeholder="+1 (555) 123-4567"
+                      />
+
+                    </div>
+
+                  </div>
+
+                  {/* ==========================================
+                      EMAIL
+                  ========================================== */}
+
+                  <div className="mt-5">
+
+                    <label className="mb-2 block text-xs font-medium text-slate-500">
+                      Your Email
+                    </label>
+
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      disabled={isSubmitting}
+                      className="w-full border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                      placeholder="hello@travel-website.com"
+                    />
+
+                  </div>
+
+                  {/* ==========================================
+                      MESSAGE
+                  ========================================== */}
+
+                  <div className="mt-5">
+
+                    <label className="mb-2 block text-xs font-medium text-slate-500">
+                      Message
+                    </label>
+
+                    <textarea
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      rows={5}
+                      required
+                      disabled={isSubmitting}
+                      className="w-full resize-none border-0 border-b border-slate-200 bg-transparent py-3 text-sm text-slate-800 outline-none transition focus:border-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                      placeholder="Tell us how we can help you..."
+                    />
+
+                  </div>
+
+                  {/* ==========================================
+                      SEND BUTTON
+                  ========================================== */}
+
                   <div className="mt-7">
 
                     <button
                       type="submit"
-                      className="inline-flex items-center gap-2 rounded-full bg-[var(--color-primary)] px-7 py-3.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--color-primary-dark)] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--color-primary)] px-7 py-3.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--color-primary-dark)] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                     >
-                      Send Message
 
-                      <Send size={16} />
+                      {isSubmitting ? (
+                        <>
+                          <span
+                            className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                          />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          Send Message
+                          <Send size={16} />
+                        </>
+                      )}
 
                     </button>
 
@@ -533,7 +656,6 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       </section>
 
-
       {/* =========================================================
           3. FAQ SECTION
       ========================================================= */}
@@ -543,6 +665,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         <div className="section-container">
 
           {/* FAQ Heading */}
+
           <motion.div
             initial={{
               opacity: 0,
@@ -576,8 +699,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 
           </motion.div>
 
-
           {/* FAQ Items */}
+
           <div className="mx-auto mt-12 max-w-3xl space-y-4">
 
             {faqs.map((faq, idx) => (
@@ -602,7 +725,9 @@ const handleSubmit = async (e: React.FormEvent) => {
               >
 
                 {/* Question */}
+
                 <button
+                  type="button"
                   onClick={() =>
                     setOpenFaq(
                       openFaq === idx
@@ -628,8 +753,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                 </button>
 
-
                 {/* Answer */}
+
                 <AnimatePresence>
 
                   {openFaq === idx && (
@@ -669,7 +794,6 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       </section>
 
-
       {/* =========================================================
           4. FINAL CTA
       ========================================================= */}
@@ -708,6 +832,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
 
               {/* Explore Button */}
+
               <Link
                 href="/routes#services"
                 className="inline-flex min-w-[180px] items-center justify-center rounded-full bg-sky-600 px-6 py-4 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-sky-700 hover:shadow-lg"
@@ -715,8 +840,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                 Explore Destinations
               </Link>
 
-
               {/* Contact Button */}
+
               <Link
                 href="/contact"
                 className="inline-flex min-w-[180px] items-center justify-center rounded-full border border-white/60 bg-white/70 px-6 py-4 text-sm font-semibold text-slate-900 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"

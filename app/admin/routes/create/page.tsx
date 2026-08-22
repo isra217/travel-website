@@ -26,8 +26,12 @@ export default function CreateRoutePage() {
   });
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
+
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
+
+  const [success, setSuccess] = useState("");
 
   // ==========================================
   // HANDLE INPUT CHANGES
@@ -44,6 +48,15 @@ export default function CreateRoutePage() {
       ...previous,
       [name]: value,
     }));
+
+    // Remove messages when user starts editing again
+    if (error) {
+      setError("");
+    }
+
+    if (success) {
+      setSuccess("");
+    }
   };
 
   // ==========================================
@@ -70,32 +83,55 @@ export default function CreateRoutePage() {
     e.preventDefault();
 
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
-      // ----------------------------------------
-      // Basic validation
-      // ----------------------------------------
+      // ========================================
+      // CHECK API URL
+      // ========================================
+
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL;
+
+      if (!apiUrl) {
+        throw new Error(
+          "API URL is not configured. Please check NEXT_PUBLIC_API_URL."
+        );
+      }
+
+      // ========================================
+      // BASIC VALIDATION
+      // ========================================
 
       if (
-        !formData.name ||
-        !formData.country ||
+        !formData.name.trim() ||
+        !formData.country.trim() ||
         !formData.price ||
-        !formData.description ||
-        !formData.duration ||
-        !formData.slug
+        !formData.description.trim() ||
+        !formData.duration.trim() ||
+        !formData.slug.trim()
       ) {
         throw new Error(
           "Please fill in all required fields."
         );
       }
 
-      // ----------------------------------------
-      // Send data to backend
-      // ----------------------------------------
+      // ========================================
+      // CLEAN SLUG
+      // ========================================
+
+      const cleanSlug = formData.slug
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-");
+
+      // ========================================
+      // SEND DATA TO BACKEND
+      // ========================================
 
       const response = await fetch(
-         `${process.env.NEXT_PUBLIC_API_URL}/api/packages`,
+        `${apiUrl}/api/packages`,
         {
           method: "POST",
 
@@ -104,37 +140,93 @@ export default function CreateRoutePage() {
           },
 
           body: JSON.stringify({
-            name: formData.name,
-            country: formData.country,
+            name: formData.name.trim(),
+
+            country: formData.country.trim(),
+
             price: Number(formData.price),
-            description: formData.description,
 
-            // Firestore currently stores duration as an array
-            duration: [formData.duration],
+            description:
+              formData.description.trim(),
 
-            slug: formData.slug,
+            duration: [
+              formData.duration.trim(),
+            ],
 
-            // Image upload will be connected next
+            slug: cleanSlug,
+
+            // Image upload will be connected separately
             coverImage: "",
           }),
         }
       );
 
-      const data = await response.json();
+      // ========================================
+      // HANDLE RESPONSE SAFELY
+      // ========================================
 
-      if (!response.ok) {
+      const contentType =
+        response.headers.get("content-type");
+
+      let data: any = null;
+
+      if (
+        contentType &&
+        contentType.includes("application/json")
+      ) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+
+        console.error(
+          "Non-JSON backend response:",
+          text
+        );
+
         throw new Error(
-          data.message || "Failed to create route."
+          `Server returned an unexpected response (${response.status}). Please check your API URL.`
         );
       }
 
-      alert("Route created successfully!");
+      // ========================================
+      // CHECK RESPONSE
+      // ========================================
 
-      // ----------------------------------------
-      // Go back to routes page
-      // ----------------------------------------
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            "Failed to create route."
+        );
+      }
 
-      router.push("/admin/routes");
+      // ========================================
+      // SUCCESS
+      // ========================================
+
+      setSuccess(
+        data?.message ||
+          "Route created successfully!"
+      );
+
+      // Clear form
+      setFormData({
+        name: "",
+        country: "",
+        price: "",
+        description: "",
+        duration: "",
+        slug: "",
+      });
+
+      setCoverImage(null);
+
+      // ========================================
+      // REDIRECT AFTER 2 SECONDS
+      // ========================================
+
+      setTimeout(() => {
+        router.push("/admin/routes");
+      }, 2000);
 
     } catch (error) {
       console.error(
@@ -145,7 +237,7 @@ export default function CreateRoutePage() {
       setError(
         error instanceof Error
           ? error.message
-          : "Something went wrong."
+          : "Something went wrong while creating the route."
       );
 
     } finally {
@@ -174,6 +266,7 @@ export default function CreateRoutePage() {
               className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-sky-600"
             >
               <ArrowLeft size={17} />
+
               Back to Routes
             </button>
 
@@ -195,7 +288,7 @@ export default function CreateRoutePage() {
         ========================================== */}
 
         {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-600">
             {error}
           </div>
         )}
@@ -229,7 +322,7 @@ export default function CreateRoutePage() {
             </div>
 
 
-            {/* Name + Country */}
+            {/* NAME + COUNTRY */}
 
             <div className="grid gap-6 md:grid-cols-2">
 
@@ -253,7 +346,7 @@ export default function CreateRoutePage() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Swiss Alpine Escape"
+                    placeholder="Istanbul Cultural Escape"
                     required
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-500 focus:bg-white"
                   />
@@ -283,7 +376,7 @@ export default function CreateRoutePage() {
                     name="country"
                     value={formData.country}
                     onChange={handleChange}
-                    placeholder="Switzerland"
+                    placeholder="Turkey"
                     required
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-500 focus:bg-white"
                   />
@@ -295,7 +388,7 @@ export default function CreateRoutePage() {
             </div>
 
 
-            {/* Price + Duration */}
+            {/* PRICE + DURATION */}
 
             <div className="mt-6 grid gap-6 md:grid-cols-2">
 
@@ -319,7 +412,7 @@ export default function CreateRoutePage() {
                     name="price"
                     value={formData.price}
                     onChange={handleChange}
-                    placeholder="2480"
+                    placeholder="1850"
                     min="0"
                     required
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-500 focus:bg-white"
@@ -350,7 +443,7 @@ export default function CreateRoutePage() {
                     name="duration"
                     value={formData.duration}
                     onChange={handleChange}
-                    placeholder="1 week"
+                    placeholder="5 Days / 4 Nights"
                     required
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-500 focus:bg-white"
                   />
@@ -362,7 +455,7 @@ export default function CreateRoutePage() {
             </div>
 
 
-            {/* Slug */}
+            {/* SLUG */}
 
             <div className="mt-6">
 
@@ -382,7 +475,7 @@ export default function CreateRoutePage() {
                   name="slug"
                   value={formData.slug}
                   onChange={handleChange}
-                  placeholder="swiss-alpine-escape"
+                  placeholder="istanbul-cultural-escape"
                   required
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-500 focus:bg-white"
                 />
@@ -390,13 +483,13 @@ export default function CreateRoutePage() {
               </div>
 
               <p className="mt-2 text-xs text-slate-400">
-                Example: swiss-alpine-escape
+                Example: istanbul-cultural-escape
               </p>
 
             </div>
 
 
-            {/* Description */}
+            {/* DESCRIPTION */}
 
             <div className="mt-6">
 
@@ -408,7 +501,7 @@ export default function CreateRoutePage() {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="A quiet beautiful and luxury travel experience..."
+                placeholder="Explore Istanbul's historic landmarks, vibrant bazaars, Bosphorus views and unique blend of European and Asian culture."
                 rows={5}
                 required
                 className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-sky-500 focus:bg-white"
@@ -441,16 +534,20 @@ export default function CreateRoutePage() {
             <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center transition hover:border-sky-400 hover:bg-sky-50">
 
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-sky-100">
+
                 <ImageIcon
                   size={25}
                   className="text-sky-600"
                 />
+
               </div>
 
               <p className="text-sm font-semibold text-slate-700">
+
                 {coverImage
                   ? coverImage.name
                   : "Choose cover image"}
+
               </p>
 
               <p className="mt-2 text-xs text-slate-400">
@@ -473,33 +570,48 @@ export default function CreateRoutePage() {
               BUTTONS
           ========================================== */}
 
-          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-8 sm:flex-row sm:justify-end">
+          <div className="mt-8 flex flex-col gap-4 border-t border-slate-100 pt-8">
 
-            <button
-              type="button"
-              onClick={() =>
-                router.push("/admin/routes")
-              }
-              disabled={loading}
-              className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-            >
-              Cancel
-            </button>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push("/admin/routes")
+                }
+                disabled={loading}
+                className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
 
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-7 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-sky-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-            >
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-7 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-sky-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              >
 
-              <Save size={18} />
+                <Save size={18} />
 
-              {loading
-                ? "Creating Route..."
-                : "Create Route"}
+                {loading
+                  ? "Creating Route..."
+                  : "Create Route"}
 
-            </button>
+              </button>
+
+            </div>
+
+
+            {/* ==========================================
+                SUCCESS MESSAGE
+            ========================================== */}
+
+            {success && (
+              <div className="w-full rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-center text-sm font-medium text-green-700">
+                ✓ {success}
+              </div>
+            )}
 
           </div>
 
